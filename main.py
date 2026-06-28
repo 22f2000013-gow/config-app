@@ -7,7 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 app = FastAPI()
 
 YOUR_EMAIL = "22f2000013@ds.study.iitm.ac.in"
-ALLOWED_ORIGIN = "https://exam.sanand.workers.dev"
+ALLOWED_ORIGIN = "https://exam.sanand.workers.dev/backendVerify"
 
 class CORSAndTimingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
