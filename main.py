@@ -20,7 +20,7 @@ app = FastAPI()
 YOUR_EMAIL = "22f2000013@ds.study.iitm.ac.in"
 
 # The ONE origin the grader is allowed to call from
-ALLOWED_ORIGIN = "https://dash-xce3ee.example.com"
+ALLOWED_ORIGIN = "https://exam.sanand.workers.dev"
 
 # ── CORS Middleware ────────────────────────────────────────────────────────
 # This is the "bouncer" — only lets in requests from our allowed origin
