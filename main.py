@@ -2,7 +2,7 @@
 CORS-Aware Metrics API
 Endpoint: GET /stats?values=1,2,3,...
 Returns: email, count, sum, min, max, mean
-CORS: Only allows https://exam.sanand.workers.dev/backendVerify
+CORS: Only allows https://exam.sanand.workers.dev
 Headers: X-Request-ID and X-Process-Time on every response
 """
 
