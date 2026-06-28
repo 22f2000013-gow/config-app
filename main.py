@@ -1,74 +1,60 @@
-"""
-CORS-Aware Metrics API
-Endpoint: GET /stats?values=1,2,3,...
-Returns: email, count, sum, min, max, mean
-CORS: Only allows https://exam.sanand.workers.dev
-Headers: X-Request-ID and X-Process-Time on every response
-"""
-
 import time
 import uuid
-from fastapi import FastAPI, Query, Request, Response
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-# ── App setup ──────────────────────────────────────────────────────────────
 app = FastAPI()
 
-# Your email address (IIT Madras student email)
 YOUR_EMAIL = "22f2000013@ds.study.iitm.ac.in"
-
-# The ONE origin the grader is allowed to call from
 ALLOWED_ORIGIN = "https://exam.sanand.workers.dev"
 
-# ── CORS Middleware ────────────────────────────────────────────────────────
-# This is the "bouncer" — only lets in requests from our allowed origin
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[ALLOWED_ORIGIN],   # ← NO wildcard "*", only this one origin
-    allow_methods=["GET", "OPTIONS"],
-    allow_headers=["*"],
-)
-
-# ── Custom Middleware: adds X-Request-ID and X-Process-Time ───────────────
-class TimingMiddleware(BaseHTTPMiddleware):
+class CORSAndTimingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        start_time = time.time()                    # Record when request started
-        request_id = str(uuid.uuid4())              # Generate a unique ID (like a receipt number)
+        origin = request.headers.get("origin", "")
+        start_time = time.time()
+        request_id = str(uuid.uuid4())
 
-        response = await call_next(request)         # Actually run the endpoint
+        # Handle preflight OPTIONS request
+        if request.method == "OPTIONS":
+            if origin == ALLOWED_ORIGIN:
+                return Response(
+                    status_code=204,
+                    headers={
+                        "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+                        "Access-Control-Allow-Methods": "GET, OPTIONS",
+                        "Access-Control-Allow-Headers": "*",
+                        "X-Request-ID": request_id,
+                        "X-Process-Time": str(time.time() - start_time),
+                    }
+                )
+            else:
+                # Evil origin — return no ACAO header
+                return Response(status_code=403)
 
-        process_time = time.time() - start_time     # How long did it take?
+        # Handle normal requests
+        response = await call_next(request)
 
-        # Attach our custom headers to EVERY response
+        # Add CORS header only for allowed origin
+        if origin == ALLOWED_ORIGIN:
+            response.headers["Access-Control-Allow-Origin"] = ALLOWED_ORIGIN
+
         response.headers["X-Request-ID"] = request_id
-        response.headers["X-Process-Time"] = str(process_time)
-
+        response.headers["X-Process-Time"] = str(time.time() - start_time)
         return response
 
-app.add_middleware(TimingMiddleware)
+app.add_middleware(CORSAndTimingMiddleware)
 
-# ── Endpoint ───────────────────────────────────────────────────────────────
 @app.get("/stats")
-def get_stats(values: str = Query(..., description="Comma-separated integers, e.g. 1,2,3")):
-    """
-    Parse comma-separated integers and return descriptive statistics.
-    """
-    # Split "1,2,3,4" into ["1","2","3","4"] and convert to integers
+def get_stats(values: str = Query(...)):
     nums = [int(v.strip()) for v in values.split(",")]
-
     count = len(nums)
     total = sum(nums)
-    minimum = min(nums)
-    maximum = max(nums)
-    mean = total / count          # Calculate average
-
     return {
         "email": YOUR_EMAIL,
         "count": count,
         "sum": total,
-        "min": minimum,
-        "max": maximum,
-        "mean": round(mean, 6),   # Enough decimal places — grader needs ±0.01 accuracy
+        "min": min(nums),
+        "max": max(nums),
+        "mean": round(total / count, 6),
     }
