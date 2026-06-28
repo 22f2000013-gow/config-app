@@ -2,7 +2,7 @@
 CORS-Aware Metrics API
 Endpoint: GET /stats?values=1,2,3,...
 Returns: email, count, sum, min, max, mean
-CORS: Only allows https://exam.sanand.workers.dev
+CORS: Only allows https://exam.sanand.workers.dev/backendVerify
 Headers: X-Request-ID and X-Process-Time on every response
 """
 
@@ -20,7 +20,7 @@ app = FastAPI()
 YOUR_EMAIL = "22f2000013@ds.study.iitm.ac.in"
 
 # The ONE origin the grader is allowed to call from
-ALLOWED_ORIGIN = "https://exam.sanand.workers.dev/backendVerify"
+ALLOWED_ORIGIN = "https://exam.sanand.workers.dev"
 
 # ── CORS Middleware ────────────────────────────────────────────────────────
 # This is the "bouncer" — only lets in requests from our allowed origin
